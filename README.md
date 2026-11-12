@@ -1,160 +1,175 @@
 <div align="center">
 
-# MovieBox-TUI
+# Termuflix
 
-**Terminal interface to find, download, and stream movies, TV shows, and live TV using local media players.**
+**Android app to discover, organize and play movies, series, anime and live TV — built on the MovieBox-Tui engine.**
 
-[ English ](README.md) • [ বাংলা ](README_BN.md) • [ हिन्दी ](README_HI.md) • [ Español ](README_ES.md)
-
-[![CI](https://img.shields.io/github/actions/workflow/status/mesamirh/MovieBox-Tui/ci.yml?branch=main&label=CI&logo=github&style=flat)](https://github.com/mesamirh/MovieBox-Tui/actions/workflows/ci.yml)
-[![crates.io](https://img.shields.io/crates/v/moviebox-tui.svg?logo=rust&style=flat)](https://crates.io/crates/moviebox-tui)
+[![CI](https://img.shields.io/github/actions/workflow/status/marboldrake/Termuflix/ci.yml?branch=main&label=CI&logo=github&style=flat)](https://github.com/marboldrake/Termuflix/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg?style=flat)](#license)
-[![Telegram](https://img.shields.io/badge/Telegram-Channel-2CA5E0?style=flat&logo=telegram&logoColor=white)](https://t.me/getfromme)
-[![Support](https://img.shields.io/badge/Support-Crypto-F7931A?style=flat&logo=bitcoin&logoColor=white)](#optional-support)
+
 </div>
 
-[moviebox-tui-walkthrough.webm](https://github.com/user-attachments/assets/7554a7e5-6ff5-49ec-9d87-f821ea99950e)
+> **Status: early development.** The Rust engine is functional as a terminal app. The Android app, the local engine API and the in-app player are in progress.
 
-## Features
+---
 
-- **Streaming:** Movies, TV series, anime, Asian dramas, and community Stremio addons across multiple native providers.
-- **Live TV:** M3U playlist import with channel categories, EPG support, and search.
-- **Resolution Picker:** Direct stream quality selection (`4K`, `1080p`, `720p`, `480p`, `Auto`) before playback.
-- **Hardware Players:** Direct launch in `mpv`, `VLC`, or `IINA` with custom auth header and cookie forwarding.
-- **Batch Downloader:** Multi-segment concurrent downloader with HTTP range pause and resume for episodes and full seasons.
-- **Subtitle Picker:** Multi-language subtitle tracks extracted and selectable via an interactive picker before playback or download.
-- **Terminal UI:** Vim navigation, mouse interaction, slash command palette (`/help`, `/settings`), and 9 built-in themes.
-- **Cover Art:** Native Kitty, Sixel, and iTerm2 poster rendering with automatic text fallback.
-- **Resume & Library:** Home deck with continue-watching timestamps, watch history, and favorites stored strictly on local disk. Zero telemetry.
+## What is Termuflix
 
-## Prerequisites
+Termuflix is a fork of [MovieBox-Tui](https://github.com/mesamirh/MovieBox-Tui) (base version `0.1.29`) with a different product goal: turn its multi-provider catalog and streaming engine into an **Android app with its own interface**.
 
-- **Media Player:** `mpv`, `VLC`, or `IINA` (macOS) / any external video player (Android).
-- **Posters:** Terminal with Sixel, Kitty, or iTerm2 support (Ghostty, Kitty, WezTerm, iTerm2, foot, Windows Terminal v1.22+).
-- **DASH Downloads:** `yt-dlp` and `ffmpeg` (required only for MovieBox DASH downloads).
+The engine already handles the hard parts: signed provider requests, search, details, seasons and episodes, stream resolution, a loopback HTTP proxy for authenticated streams, subtitle handling, batch downloads, watch history, favorites and caching.
 
-## Installation
+What is new is the presentation layer: a native Android app, a local API between the engine and the UI, and an embedded video player.
 
-### macOS & Linux
+---
 
-If you have [Homebrew](https://brew.sh/) on macOS:
+## Goals
+
+- **Android first.** A real app with a dark, neutral interface — not a terminal wrapped in a WebView.
+- **Reuse the engine.** Keep the Rust providers, proxy and downloader; do not rewrite them in Kotlin.
+- **Local by design.** The app talks to the engine on `127.0.0.1`; no external backend, no telemetry.
+- **In-app playback.** Media3/ExoPlayer for HLS/DASH, headers, subtitles and resume — no dependency on VLC or MX Player.
+- **Build on every push.** GitHub Actions produces an installable APK artifact.
+- **Honest scoping.** Optional Termux-style tooling (`yt-dlp`, `ffmpeg`) only if a later phase really needs it.
+
+---
+
+## Architecture
+
+```text
+┌──────────────────────────────────────────────┐
+│                 Android app                  │
+│   Kotlin + Jetpack Compose (or WebView UI)   │
+│                                              │
+│   UI  ──►  Local API client  ──►  127.0.0.1  │
+│   Player (Media3 / ExoPlayer)                │
+└───────────────────────┬──────────────────────┘
+                        │ HTTP / JSON
+┌───────────────────────▼──────────────────────┐
+│              Rust engine (headless)          │
+│  service.rs · providers/ · proxy.rs          │
+│  cache · history · favorites · downloads     │
+└───────────────────────┬──────────────────────┘
+                        │
+        ┌───────────────┼────────────────┐
+        ▼               ▼                ▼
+   MovieBox        4KHDHub          Dramachi / BDIX
+   Stremio addons  M3U / IPTV      Local disk cache
+```
+
+The desktop terminal UI (`src/tui/`) remains in the repository and keeps working. It is the reference for flows, states and data, not the final interface.
+
+---
+
+## Current capabilities (engine)
+
+- **Providers:** MovieBox (signed CloudFront requests), 4KHDHub, Dramachi, BDIX CircleFTP and DhakaFlix.
+- **Addons:** community Stremio HTTP manifests and stream aggregation.
+- **Live TV:** M3U playlists, categories, EPG and search.
+- **Streams:** quality selection (`4K`, `1080p`, `720p`, `480p`, `Auto`) and subtitle picker.
+- **Playback (today):** `mpv`, `VLC`, `IINA`, or Android intents (`termux-open`, `termux-am`).
+- **Downloads:** multi-segment HTTP range engine with pause, resume and season batches.
+- **Library:** continue watching, history and favorites stored locally.
+- **Cache:** binary MessagePack cache with atomic writes.
+- **Proxy:** loopback HTTP relay with header injection and DASH manifest rewriting.
+
+---
+
+## Roadmap
+
+| Phase | Deliverable | Status |
+|---|---|---|
+| 0 | Repository setup, context docs, Git flow | Done |
+| 1 | Android CI workflow (APK artifact per push) | Planned |
+| 2 | Headless engine API (`--serve`) | Planned |
+| 3 | Android shell + UI (Compose or WebView) | Planned |
+| 4 | Media3 player with headers, subtitles and resume | Planned |
+| 5 | Release signing, distribution, updates | Planned |
+| 6 | Optional Termux-style tooling for `yt-dlp`/`ffmpeg` | Optional |
+
+Phase details and decisions live in [`resumen.md`](resumen.md) and [`sesion.md`](sesion.md).
+
+---
+
+## Repository layout
+
+```text
+src/                    Rust engine + current terminal UI
+  service.rs            Multi-provider facade
+  providers/            MovieBox, 4KHDHub, Dramachi, BDIX, addons, M3U
+  proxy.rs              Loopback HTTP proxy and DASH rewriter
+  download.rs           Segmented downloader
+  tui/                  Terminal presentation layer
+  player.rs             External player and Android intent launch
+tests/                  Integration and contract tests
+docs/                   Architecture, configuration and provider guides
+resumen.md              Stable project context for agents
+sesion.md               Session log and next steps
+AGENTS.md               Entry point for AI agents
+```
+
+---
+
+## Build (desktop engine)
+
+Requirements: Rust `1.90.0` or newer.
+
 ```bash
-brew tap mesamirh/moviebox-tui https://github.com/mesamirh/MovieBox-Tui
-brew install moviebox-tui
-```
-
-> **Note:** If Homebrew prompts for tap verification on initial install, run `brew trust mesamirh/moviebox-tui`.
-
-Direct install via Terminal (macOS & Linux, no package manager needed):
-```bash
-curl -fsSL https://raw.githubusercontent.com/mesamirh/MovieBox-Tui/main/install.sh | bash
-```
-
-### Windows
-
-If you have [Scoop](https://scoop.sh/) (recommended):
-```powershell
-scoop bucket add moviebox https://github.com/mesamirh/MovieBox-Tui
-scoop install moviebox-tui
-```
-
-Direct install via PowerShell (no package manager needed):
-```powershell
-irm https://raw.githubusercontent.com/mesamirh/MovieBox-Tui/main/install.ps1 | iex
-```
-
-> **SmartScreen prompt:** If Windows displays *"Windows protected your PC"*, click **More info** → **Run anyway**.
-
-### Android (Termux)
-```bash
-pkg update && pkg install -y curl tar termux-tools termux-am
-curl -fsSL https://raw.githubusercontent.com/mesamirh/MovieBox-Tui/main/install.sh | bash
-termux-setup-storage
-```
-
-<details>
-<summary><b>Cargo & Source Build</b></summary>
-
-```bash
-cargo install moviebox-tui --locked
-```
-
-From source:
-```bash
-git clone https://github.com/mesamirh/MovieBox-Tui.git
-cd MovieBox-Tui
+git clone https://github.com/marboldrake/Termuflix.git
+cd Termuflix
 cargo build --release --locked
+cargo run --release --locked
 ```
 
-</details>
-
-<details>
-<summary><b>Verify Release Integrity</b></summary>
+Run the test suite:
 
 ```bash
-sha256sum -c SHA256SUMS --ignore-missing
-gh attestation verify <archive-file> -R mesamirh/MovieBox-Tui
+cargo test --all-features --locked
 ```
 
-</details>
+The current terminal app expects an external player (`mpv`, `VLC` or `IINA`). On Android/Termux it uses `termux-open` or `am start` until the in-app player is ready.
 
-<details>
-<summary><b>Uninstall</b></summary>
+---
 
-Re-run install command (`curl ... | bash` or `irm ... | iex`) and select `2) Uninstall`.
+## Android build
 
-Or via package manager:
-```bash
-brew uninstall moviebox-tui     # Homebrew
-scoop uninstall moviebox-tui    # Scoop
-cargo uninstall moviebox-tui    # Cargo
-```
+The Android app is not in the repository yet. The plan is:
 
-</details>
+1. Add an `android/` Gradle project with a Kotlin shell.
+2. Build the Rust engine for `aarch64-linux-android`.
+3. Package it as a native library and expose a local API.
+4. Assemble a debug APK in GitHub Actions on every push.
+5. Sign release builds with repository secrets.
 
-## Quick Start
+The existing `.github/workflows/release.yml` already compiles the Rust binary for `aarch64-linux-android`, but it produces a terminal binary archive, not an APK. A dedicated `android.yml` workflow will handle the app.
 
-```bash
-moviebox-tui
-```
+---
 
-- Type to search, press `Enter` to play.
-- Press `?` for shortcuts, or type `/settings` for preferences.
+## Context documents
 
-## Documentation
+This repository keeps durable context for every new session:
 
-Full documentation at [**mesamirh.github.io/MovieBox-Tui**](https://mesamirh.github.io/MovieBox-Tui/) or [`docs/`](docs/):
+| File | Purpose |
+|---|---|
+| [`resumen.md`](resumen.md) | Architecture, decisions, constraints and current state |
+| [`sesion.md`](sesion.md) | What was done, what is pending and blockers |
+| [`AGENTS.md`](AGENTS.md) | Reading order and working rules for AI agents |
+| [`docs/ui-prompt-google-ai-studio.md`](docs/ui-prompt-google-ai-studio.md) | Prompt used to generate the Android UI prototype |
 
-| Guide | Description |
-| :--- | :--- |
-| [Keyboard & Controls](docs/controls.md) | Keybindings, vim navigation, and shortcuts |
-| [Configuration](docs/config.md) | Settings, themes, and environment variables |
-| [Content Providers](docs/providers.md) | Native scrapers (MovieBox, 4KHDHub, Dramachi, BDIX) |
-| [Stremio Addons](docs/addons-mode.md) | Community addon configuration and streaming |
-| [Hardware Players](docs/players.md) | Player detection, launch options, and flags |
-| [Live TV & IPTV](docs/tv-mode.md) | M3U playlist import and channel streaming |
-| [Batch Downloads](docs/downloads.md) | HTTP range engine, pause, and resume |
+---
 
 ## Contributing
 
-Review [CONTRIBUTING.md](CONTRIBUTING.md) before submitting pull requests. Report bugs via [GitHub Issues](https://github.com/mesamirh/MovieBox-Tui/issues).
+- Work on the `android-app` branch; `main` mirrors the current stable baseline.
+- Keep commits scoped: `feat(android)`, `feat(engine)`, `docs(context)`, `ci(android)`.
+- Do not commit tokens, keystores or `local.properties`.
+- Run `cargo fmt --check`, `cargo clippy --all-targets --all-features --locked -- -D warnings` and the test suite before opening a PR.
 
-<details>
-<summary><b>Support</b></summary>
-<div id="optional-support" tabindex="-1"></div>
+---
 
-| Asset | Address |
-| :--- | :--- |
-| **USDT (TRC20)** | `TL4yW73qmbKZpBWwbEFgjBpwVkPDFTkJgV` |
-| **Bitcoin (BTC)** | `3MEAtqtRWrQBhnaMi3Zuf5nt2efNUS2LUQ` |
-| **Ethereum (EVM)** | `0x7ea20d5fa29d87f33195f5a3b211ff94038d794c` |
-| **Solana (SOL)** | `6ctm5WFv73MNywoCKAz3xK72yizSspHa72rFNygooU6` |
+## Credits
 
-</details>
-
-## Privacy
-
-Zero telemetry, analytics, or user tracking. History, favorites, and config remain local.
+Termuflix is based on [MovieBox-Tui](https://github.com/mesamirh/MovieBox-Tui) by mesamirh and its contributors. The upstream project provides the provider integrations, terminal UI and release tooling. Upstream translations remain available as `README_ES.md`, `README_BN.md` and `README_HI.md` for reference.
 
 ## License
 
@@ -162,4 +177,4 @@ Dual-licensed under [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE).
 
 ## Disclaimer
 
-MovieBox-TUI does not host or store media. It plays publicly available streams. Users must comply with local laws.
+Termuflix does not host or store media. It resolves publicly available streams and plays them with a local player. Users are responsible for complying with the laws and terms of service that apply in their country.
