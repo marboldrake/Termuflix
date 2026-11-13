@@ -230,10 +230,21 @@ git push                       # crea/actualiza origin/android-app
 
 ---
 
-## 11. Próximos pasos
+## 11. UI (termuflix-UI) y plan de backend
 
-1. Generar la UI en AI Studio con el prompt de `docs/ui-prompt-google-ai-studio.md`.
-2. Revisar el prototipo y decidir **Compose vs WebView**.
-3. Crear el esqueleto `android/` y `.github/workflows/android.yml`.
-4. Implementar la API local del motor (`--serve`).
+La UI ya existe en `../termuflix-UI` (generada en Google AI Studio). No está dentro del repo por ahora.
+
+- **Stack:** React 19 + Vite 8 + Tailwind v4 + TypeScript.
+- **Tamaño:** ~5.500 líneas, 7 pantallas + sistema de modales/bottom sheets, tema oscuro neutro.
+- **Contrato API:** `src/lib/api.ts` define `CatalogApi` y documenta los endpoints esperados (`/catalog`, `/search`, `/media/:id`, `/live/channels`, `/downloads`, `/playlists`, `/addons`, `/providers`, `/health`).
+- **Estado:** 100 % mock. Los handlers de escritura (favoritos, historial, descargas, playlists, addons, settings) solo actualizan estado local.
+- **Integración recomendada:** WebView híbrido primero (bundle en `assets/`, motor en `jniLibs/`), luego migración a Compose pantalla por pantalla.
+- **Plan completo:** `docs/backend-plan.md`.
+
+## 12. Próximos pasos
+
+1. Implementar el modo `--serve` en el motor (fase A del plan de backend).
+2. Compilar localmente y corregir errores; regenerar `Cargo.lock`.
+3. Integrar la UI con el motor real (sustituir `mockApi` por `httpApi`).
+4. Crear el esqueleto `android/` y `.github/workflows/android.yml`.
 5. Integrar Media3 y probar un stream real.

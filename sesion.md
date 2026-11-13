@@ -51,14 +51,30 @@
 
 ---
 
+## Análisis de la UI (termuflix-UI)
+
+La UI ya existe en `../termuflix-UI` (generada en Google AI Studio). Se analizó sin modificarla.
+
+- **Stack:** React 19 + Vite 8 + Tailwind v4 + TypeScript. ~5.500 líneas.
+- **Pantallas:** Home, Search, Details, Player (mock), Live TV, Library, Settings.
+- **Modales/sheets:** proveedor, reproductor, subtítulos, playlists, addons, sinopsis, actualización, confirmación, ayuda, descargas, acciones rápidas, toasts.
+- **API:** `CatalogApi` en `src/lib/api.ts` con endpoints documentados.
+- **Estado:** todo mock; escrituras solo locales.
+- **Problemas menores detectados:** URL del repo hardcodeada a `termuflix/termuflix` (debería ser `marboldrake/Termuflix`); deps sobrantes (`@google/genai`, `express`, `dotenv`); `.aistudio/` con artefactos.
+- **Plan de backend:** `docs/backend-plan.md`.
+
+---
+
 ## Pendiente
 
-- [ ] Generar la UI en AI Studio y revisar el prototipo.
+- [x] Generar la UI en AI Studio y analizarla (../termuflix-UI).
+- [ ] Implementar el modo `--serve` en el motor (fase A del plan de backend).
+- [ ] Compilar localmente y regenerar `Cargo.lock`.
+- [ ] Sustituir `mockApi` por `httpApi` en la UI.
 - [ ] Confirmar **Compose vs WebView** para la UI final.
 - [ ] Confirmar `package id`, `minSdk`, `targetSdk`, nombre visible e idioma.
 - [ ] Crear `.github/workflows/android.yml`.
-- [ ] Crear el esqueleto `android/` (Gradle + Kotlin/Compose o WebView).
-- [ ] Implementar la API local del motor (`--serve`).
+- [ ] Crear el esqueleto `android/`.
 - [ ] Integrar Media3 y probar un stream real.
 - [ ] Definir firma release y secrets del CI.
 
