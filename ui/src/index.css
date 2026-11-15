@@ -1,0 +1,187 @@
+@import "tailwindcss";
+
+:root,
+[data-theme="graphite"] {
+  --bg: #07080a;
+  --bg-elev: #0b0c0f;
+  --surface: #121418;
+  --surface-2: #171a1f;
+  --surface-3: #1d2127;
+  --border: #242830;
+  --border-strong: #313640;
+  --text: #f4f5f7;
+  --text-2: #a7adb8;
+  --text-3: #6e7683;
+  --accent: #d9dee5;
+  --accent-text: #0a0b0d;
+  --success: #7fb89a;
+  --warning: #d6b36a;
+  --error: #d97a72;
+  --info: #93a7c4;
+  --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+[data-theme="onyx"] {
+  --bg: #030405;
+  --bg-elev: #07080a;
+  --surface: #0d0e11;
+  --surface-2: #121418;
+  --surface-3: #181b20;
+  --border: #1e2128;
+  --border-strong: #2c303a;
+  --text: #f4f5f7;
+  --text-2: #a3a9b5;
+  --text-3: #68707d;
+  --accent: #e1e5eb;
+  --accent-text: #050607;
+  --success: #7fb89a;
+  --warning: #d6b36a;
+  --error: #d97a72;
+  --info: #93a7c4;
+  --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="slate"] {
+  --bg: #0a0c10;
+  --bg-elev: #0f1217;
+  --surface: #151921;
+  --surface-2: #1b2029;
+  --surface-3: #222833;
+  --border: #28303d;
+  --border-strong: #364050;
+  --text: #f4f5f7;
+  --text-2: #abb2bf;
+  --text-3: #737c8b;
+  --accent: #d9dee5;
+  --accent-text: #0a0b0d;
+  --success: #7fb89a;
+  --warning: #d6b36a;
+  --error: #d97a72;
+  --info: #93a7c4;
+  --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color-scheme: dark;
+}
+
+.font-mono-tabular {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Focus visibility */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Scrollbars */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Safe area helpers */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Motion and skeleton animations */
+@keyframes tf-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.tf-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface) 0%,
+    var(--surface-2) 50%,
+    var(--surface) 100%
+  );
+  background-size: 200% 100%;
+  animation: tf-shimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes tf-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes tf-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes tf-toast-bar {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+.tf-sheet-enter {
+  animation: tf-slide-up 200ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.tf-fade-enter {
+  animation: tf-fade-in 180ms ease-out forwards;
+}
+
+.tf-toast-countdown {
+  transform-origin: left center;
+  animation: tf-toast-bar 4.5s linear forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

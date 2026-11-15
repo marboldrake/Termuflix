@@ -67,7 +67,10 @@ La UI ya existe en `../termuflix-UI` (generada en Google AI Studio). Se analizó
 
 ## Pendiente
 
-- [x] Generar la UI en AI Studio y analizarla (../termuflix-UI).
+- [x] Generar la UI en AI Studio y analizarla.
+- [x] Integrar la UI en el repo como `ui/` y cablear `httpApi` (App.tsx selecciona mock/http según `VITE_USE_MOCK`).
+- [x] Corregir la URL del repo en la UI (`marboldrake/Termuflix`).
+- [x] Actualizar `.gitignore` y el workflow CI para la ruta `ui/`.
 - [x] Implementar el modo `--serve` en el motor (fase A).
 - [x] Implementar fase B (escritura): settings, playlists, addons, favorites, history, downloads, play, cache, bdix, version.
 - [x] Implementar fase C: resolución de streams (MovieBox, 4KHDHub, Dramachi, BDIX, Addons) + proxy sidecar; `/media/:id` devuelve `streams` con URLs reproducibles (verificado: HEAD 200 video/mp4).

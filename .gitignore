@@ -22,3 +22,9 @@ dist/
 book/
 docs/changelog.md
 docs/contributing.md
+
+# UI (Vite/React)
+ui/node_modules/
+ui/dist/
+ui/.aistudio/
+ui/.env.local

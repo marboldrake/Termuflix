@@ -76,20 +76,20 @@ jobs:
         with:
           node-version: "20"
           cache: "npm"
-          cache-dependency-path: termuflix-UI/package-lock.json
+          cache-dependency-path: ui/package-lock.json
 
       - name: Install deps
-        working-directory: termuflix-UI
+        working-directory: ui
         run: npm ci
 
       - name: Build
-        working-directory: termuflix-UI
+        working-directory: ui
         run: npm run build
 
       - uses: actions/upload-artifact@v7
         with:
           name: web-dist
-          path: termuflix-UI/dist
+          path: ui/dist
 
   build-apk:
     name: Assemble Android APK

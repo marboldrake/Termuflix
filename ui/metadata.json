@@ -1,0 +1,6 @@
+{
+  "name": "Termuflix",
+  "description": "Mobile-first media discovery, streaming, live TV, and offline library interface for the Termuflix local Rust engine.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}

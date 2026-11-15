@@ -230,9 +230,16 @@ git push                       # crea/actualiza origin/android-app
 
 ---
 
-## 11. UI (termuflix-UI) y plan de backend
+## 11. UI (`ui/`) y plan de backend
 
-La UI ya existe en `../termuflix-UI` (generada en Google AI Studio). No está dentro del repo por ahora.
+La UI ya existe y ahora está integrada en el repo bajo `ui/` (generada en Google AI Studio).
+
+- **Stack:** React 19 + Vite 8 + Tailwind v4 + TypeScript.
+- **Tamaño:** ~5.500 líneas, 7 pantallas + sistema de modales/bottom sheets, tema oscuro neutro.
+- **Contrato API:** `ui/src/lib/api.ts` define `CatalogApi` y documenta los endpoints esperados.
+- **Estado:** `httpApi` implementado contra `http://127.0.0.1:8080/api/v1`; `mockApi` sigue disponible con `VITE_USE_MOCK=true`. `App.tsx` selecciona automáticamente.
+- **Integración recomendada:** WebView híbrido (bundle en `assets/web/`, motor en `jniLibs/`), luego migración a Compose.
+- **Plan completo:** `docs/backend-plan.md`.
 
 - **Stack:** React 19 + Vite 8 + Tailwind v4 + TypeScript.
 - **Tamaño:** ~5.500 líneas, 7 pantallas + sistema de modales/bottom sheets, tema oscuro neutro.
