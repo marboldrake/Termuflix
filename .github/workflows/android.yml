@@ -116,8 +116,6 @@ jobs:
           name: web-dist
           path: android/app/src/main/assets/web
 
-      - uses: android-actions/setup-android@v3
-
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
