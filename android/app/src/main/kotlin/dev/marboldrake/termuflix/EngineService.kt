@@ -1,7 +1,6 @@
 package dev.marboldrake.termuflix
 
 import android.content.Context
-import android.os.Process
 import android.util.Log
 import java.io.File
 
