@@ -83,6 +83,16 @@ async fn main() -> std::io::Result<()> {
         moviebox_tui::proxy::run_sidecar(target_url, headers, sub_url, max_height).await;
         return Ok(());
     }
+    if args.iter().any(|a| a == "--serve") {
+        let port: u16 = args
+            .iter()
+            .position(|a| a == "--port")
+            .and_then(|i| args.get(i + 1))
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(8080);
+        moviebox_tui::serve::run(port).await;
+        return Ok(());
+    }
     if args.iter().any(|arg| arg == "--help" || arg == "-h") {
         println!("moviebox-tui {}", env!("CARGO_PKG_VERSION"));
         println!("A terminal client for finding and streaming movies, TV shows, and anime.\n");
@@ -90,7 +100,8 @@ async fn main() -> std::io::Result<()> {
         println!("    moviebox-tui [OPTIONS]\n");
         println!("OPTIONS:");
         println!("    -h, --help           Print help information");
-        println!("    -v, -V, --version    Print version information\n");
+        println!("    -v, -V, --version    Print version information");
+    println!("    --serve [--port P]   Run as a local HTTP API server (default port 8080)\n");
         println!("ENVIRONMENT VARIABLES:");
         println!("    MOVIEBOX_LOG            Log level (off, error, warn, info, debug, trace)");
         println!("    MOVIEBOX_THEME          Theme name (e.g. catppuccin, dracula, nord, etc.)");
