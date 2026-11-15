@@ -7,6 +7,7 @@ use axum::{
     response::Json,
     routing::{delete, get, patch, post},
 };
+use tower_http::cors::{Any, CorsLayer};
 use serde::{Deserialize, Serialize};
 use tokio::net::TcpListener;
 
@@ -1029,6 +1030,7 @@ pub async fn run(port: u16) {
         .route("/api/v1/cache/clear", post(cache_clear))
         .route("/api/v1/bdix/recheck", post(bdix_recheck))
         .route("/api/v1/version", get(version_info))
+        .layer(CorsLayer::new().allow_origin(Any).allow_methods(Any).allow_headers(Any))
         .with_state(state);
 
     let listener = TcpListener::bind(("127.0.0.1", port)).await.unwrap();

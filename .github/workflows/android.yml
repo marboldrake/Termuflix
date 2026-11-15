@@ -1,0 +1,130 @@
+name: Android
+
+on:
+  push:
+    branches: [android-app, main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-engine:
+    name: Build Rust engine (aarch64-linux-android)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.90.0
+          targets: aarch64-linux-android
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: "android-engine-aarch64"
+
+      - name: Setup Android NDK
+        id: setup-ndk
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r26d
+          add-to-path: false
+
+      - name: Build engine
+        run: |
+          TOOLCHAIN="${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          echo "$TOOLCHAIN" >> $GITHUB_PATH
+          export PATH="$TOOLCHAIN:$PATH"
+          export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="$TOOLCHAIN/aarch64-linux-android24-clang"
+          export CC_aarch64_linux_android="$TOOLCHAIN/aarch64-linux-android24-clang"
+          export AR_aarch64_linux_android="$TOOLCHAIN/llvm-ar"
+          cargo build --release --locked --target aarch64-linux-android
+
+      - name: Validate ELF
+        run: |
+          BIN="target/aarch64-linux-android/release/moviebox-tui"
+          readelf -lW "$BIN" | grep -F "PHDR" || { echo "::error::Missing PT_PHDR"; exit 1; }
+          readelf -lW "$BIN" | grep -F "/system/bin/linker64" || { echo "::error::Missing Android PT_INTERP"; exit 1; }
+
+      - name: Stage as native lib
+        run: |
+          mkdir -p android/app/src/main/jniLibs/arm64-v8a
+          cp target/aarch64-linux-android/release/moviebox-tui \
+             android/app/src/main/jniLibs/arm64-v8a/libtermuflix_engine.so
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: engine-aarch64
+          path: android/app/src/main/jniLibs/arm64-v8a/libtermuflix_engine.so
+
+  build-web:
+    name: Build web UI bundle
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: termuflix-UI/package-lock.json
+
+      - name: Install deps
+        working-directory: termuflix-UI
+        run: npm ci
+
+      - name: Build
+        working-directory: termuflix-UI
+        run: npm run build
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: web-dist
+          path: termuflix-UI/dist
+
+  build-apk:
+    name: Assemble Android APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [build-engine, build-web]
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Download engine
+        uses: actions/download-artifact@v8
+        with:
+          name: engine-aarch64
+          path: android/app/src/main/jniLibs/arm64-v8a
+
+      - name: Download web bundle
+        uses: actions/download-artifact@v8
+        with:
+          name: web-dist
+          path: android/app/src/main/assets/web
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/gradle-build-action@v3
+        with:
+          gradle-version: "8.9"
+
+      - name: Assemble debug APK
+        working-directory: android
+        run: gradle assembleDebug --no-daemon
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: termuflix-debug-apk
+          path: android/app/build/outputs/apk/debug/*.apk

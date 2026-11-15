@@ -71,6 +71,8 @@ La UI ya existe en `../termuflix-UI` (generada en Google AI Studio). Se analizó
 - [x] Implementar el modo `--serve` en el motor (fase A).
 - [x] Implementar fase B (escritura): settings, playlists, addons, favorites, history, downloads, play, cache, bdix, version.
 - [x] Implementar fase C: resolución de streams (MovieBox, 4KHDHub, Dramachi, BDIX, Addons) + proxy sidecar; `/media/:id` devuelve `streams` con URLs reproducibles (verificado: HEAD 200 video/mp4).
+- [x] Implementar fase D: esqueleto Android (Gradle + Kotlin + WebView + EngineService) y workflow `.github/workflows/android.yml` (build engine + web bundle + APK).
+- [x] CORS habilitado en el servidor para el WebView (`tower-http`).
 - [x] Compilar localmente y regenerar `Cargo.lock` (425 tests pasan; clippy limpio).
 - [x] Probar el servidor end-to-end: /health, /providers, /catalog, /search, /media/:id (con streams), /playlists, /addons, /settings, /downloads, /favorites, /history, /cache/clear, /bdix/recheck, /version.
 - [ ] Sustituir `mockApi` por `httpApi` en la UI.
