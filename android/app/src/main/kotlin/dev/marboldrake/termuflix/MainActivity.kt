@@ -53,6 +53,13 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        // Show a visible loading screen immediately
+        webView.loadData(
+            "<html><body style='background:#07080a;color:#f4f5f7;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0'><div style='text-align:center'><h1 style='letter-spacing:.18em;font-size:14px'>TERMUFLIX</h1><p style='color:#6e7683;font-size:12px'>Starting engine…</p></div></body></html>",
+            "text/html",
+            "UTF-8"
+        )
+
         lifecycleScope.launch {
             waitForEngine()
             Log.i(tag, "Loading web bundle")
@@ -90,7 +97,7 @@ class MainActivity : AppCompatActivity() {
     private fun showFallback(msg: String) {
         runOnUiThread {
             val tv = TextView(this).apply {
-                text = "$msg\n\nCheck logcat for details."
+                text = "$msg\n\nCheck logcat: adb logcat -s TermuflixUI"
                 gravity = Gravity.CENTER
                 setPadding(32, 32, 32, 32)
             }
