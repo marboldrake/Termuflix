@@ -352,6 +352,92 @@ fn map_catalog(item: &DomainCatalogItem) -> ApiCatalogItem {
     }
 }
 
+async fn resolve_streams(
+    state: &AppState,
+    pk: crate::providers::models::ProviderKind,
+    id: &str,
+    details: &DomainMediaDetails,
+    season: usize,
+    episode: usize,
+) -> Vec<ApiStream> {
+    use crate::providers::ReleaseProvider;
+    use crate::providers::models::Release;
+
+    let releases: Vec<Release> = match pk {
+        crate::providers::models::ProviderKind::MovieBox => {
+            ReleaseProvider::episode_streams(&state.service.client, id, season, episode)
+                .await
+                .unwrap_or_default()
+        }
+        crate::providers::models::ProviderKind::FourKHdHub => {
+            if let Some(client) = state.service.fourk_client.as_ref() {
+                ReleaseProvider::episode_streams(client, id, season, episode)
+                    .await
+                    .unwrap_or_default()
+            } else {
+                vec![]
+            }
+        }
+        crate::providers::models::ProviderKind::Dramachi => {
+            ReleaseProvider::episode_streams(&state.service.dramachi_client, id, season, episode)
+                .await
+                .unwrap_or_default()
+        }
+        crate::providers::models::ProviderKind::BdixCircleFtp => {
+            ReleaseProvider::episode_streams(&state.service.circleftp_client, id, season, episode)
+                .await
+                .unwrap_or_default()
+        }
+        crate::providers::models::ProviderKind::BdixDhakaFlix => {
+            ReleaseProvider::episode_streams(&state.service.dhakaflix_client, id, season, episode)
+                .await
+                .unwrap_or_default()
+        }
+        crate::providers::models::ProviderKind::Addons => {
+            let addons = config::load_addons();
+            let (rels, _) = crate::providers::addons::aggregate_streams(
+                &state.service.addon_client,
+                &addons,
+                id,
+                season,
+                episode,
+                details.is_series(),
+            )
+            .await;
+            rels
+        }
+    };
+
+    let mut out = Vec::new();
+    for (i, release) in releases.iter().enumerate() {
+        let target_url = match release.direct_url() {
+            Some(u) if !u.is_empty() => u.to_string(),
+            _ => continue,
+        };
+        let headers = release
+            .mirrors
+            .first()
+            .map(|m| m.headers.clone())
+            .unwrap_or_default();
+        let sub_url: Option<&str> = None;
+        if let Ok((proxy_url, _child)) = crate::proxy::spawn_sidecar(&target_url, &headers, sub_url, None) {
+            out.push(ApiStream {
+                id: format!("{}-{}", release.filename, i),
+                resolution: release.quality.clone().unwrap_or_else(|| "Auto".to_string()),
+                size: release
+                    .size_bytes
+                    .map(|b| format!("{:.1} GB", b as f64 / 1_073_741_824.0))
+                    .unwrap_or_default(),
+                codec: release.codec.clone().unwrap_or_else(|| "direct".to_string()),
+                source: release.source_label().to_string(),
+                url: proxy_url,
+                subtitles: vec![],
+            });
+        }
+    }
+    out
+}
+
 fn map_media_details(d: &DomainMediaDetails) -> ApiMediaDetails {
     let provider_key = ui_provider_id(&d.id.provider).to_string();
     let id = format!("{}:{}", provider_key, d.id.value);
@@ -517,7 +603,13 @@ async fn media_details(
     };
     let pk = provider_from_str(&provider_str);
     match state.service.details_typed(pk, &value).await {
-        Ok(details) => Json(Some(map_media_details(&details))),
+        Ok(details) => {
+            let mut api = map_media_details(&details);
+            let season = if details.is_series() { 1usize } else { 0usize };
+            let episode = if details.is_series() { 1usize } else { 0usize };
+            api.streams = resolve_streams(&state, pk, &value, &details, season, episode).await;
+            Json(Some(api))
+        }
         Err(_) => Json(None),
     }
 }
