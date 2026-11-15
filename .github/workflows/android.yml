@@ -78,7 +78,14 @@ jobs:
 
       - name: Install deps
         working-directory: ui
-        run: npm install
+        run: npm install --legacy-peer-deps --no-audit --no-fund
+
+      - name: Upload npm logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: npm-logs
+          path: /home/runner/.npm/_logs
 
       - name: Build
         working-directory: ui
