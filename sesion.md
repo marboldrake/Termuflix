@@ -68,10 +68,11 @@ La UI ya existe en `../termuflix-UI` (generada en Google AI Studio). Se analizó
 ## Pendiente
 
 - [x] Generar la UI en AI Studio y analizarla (../termuflix-UI).
-- [x] Implementar el modo `--serve` en el motor (fase A): /health, /providers, /catalog, /search, /media/:id, /live/channels, /downloads, /playlists, /addons, /favorites, /history.
-- [x] Implementar fase B (escritura): settings GET/PATCH, playlists CRUD+reload, addons CRUD+reload, favorites add/remove, history add/remove/clear, downloads create/patch/delete, play, cache/clear, bdix/recheck, version.
+- [x] Implementar el modo `--serve` en el motor (fase A).
+- [x] Implementar fase B (escritura): settings, playlists, addons, favorites, history, downloads, play, cache, bdix, version.
+- [x] Implementar fase C: resolución de streams (MovieBox, 4KHDHub, Dramachi, BDIX, Addons) + proxy sidecar; `/media/:id` devuelve `streams` con URLs reproducibles (verificado: HEAD 200 video/mp4).
 - [x] Compilar localmente y regenerar `Cargo.lock` (425 tests pasan; clippy limpio).
-- [x] Probar el servidor: todos los endpoints de fase A y B responden correctamente (MovieBox real).
+- [x] Probar el servidor end-to-end: /health, /providers, /catalog, /search, /media/:id (con streams), /playlists, /addons, /settings, /downloads, /favorites, /history, /cache/clear, /bdix/recheck, /version.
 - [ ] Sustituir `mockApi` por `httpApi` en la UI.
 - [ ] Confirmar **Compose vs WebView** para la UI final.
 - [ ] Confirmar `package id`, `minSdk`, `targetSdk`, nombre visible e idioma.
