@@ -75,12 +75,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "npm"
-          cache-dependency-path: ui/package-lock.json
 
       - name: Install deps
         working-directory: ui
-        run: npm ci
+        run: npm install
 
       - name: Build
         working-directory: ui
@@ -110,6 +108,8 @@ jobs:
         with:
           name: web-dist
           path: android/app/src/main/assets/web
+
+      - uses: android-actions/setup-android@v3
 
       - uses: actions/setup-java@v4
         with:
