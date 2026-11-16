@@ -3,6 +3,7 @@ package dev.marboldrake.termuflix
 import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
+import android.view.ViewGroup
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
@@ -27,6 +28,10 @@ class MainActivity : AppCompatActivity() {
         EngineService.start(this)
 
         webView = WebView(this)
+        webView.layoutParams = ViewGroup.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT
+        )
         webView.setBackgroundColor(Color.parseColor("#07080a"))
         setContentView(webView)
 
@@ -44,6 +49,14 @@ class MainActivity : AppCompatActivity() {
                 Log.i(tag, "Page finished: $url")
             }
         }
+
+        webView.loadDataWithBaseURL(
+            "file:///android_asset/web/",
+            "<html><body style='background:#07080a;color:#f4f5f7;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0'><div style='text-align:center'><h1 style='letter-spacing:.18em;font-size:14px'>TERMUFLIX</h1><p style='color:#6e7683;font-size:12px'>Starting engine…</p></div></body></html>",
+            "text/html",
+            "UTF-8",
+            null
+        )
 
         lifecycleScope.launch {
             waitForEngine()
