@@ -34,16 +34,7 @@ class MainActivity : AppCompatActivity() {
         container.addView(terminalView)
         setContentView(container)
 
-        EngineService.start(this) // no-op now, kept for compat
-
-        lifecycleScopeSafe {
-            startTerminal()
-        }
-    }
-
-    private fun lifecycleScopeSafe(block: () -> Unit) {
-        // Run on main thread
-        runOnUiThread { block() }
+        startTerminal()
     }
 
     private fun startTerminal() {
@@ -67,11 +58,12 @@ class MainActivity : AppCompatActivity() {
                 Log.i(tag, "session finished")
             }
             override fun onCopyTextToClipboard(session: TerminalSession, text: String) {}
-            override fun onPasteTextFromClipboard(session: TerminalSession) {}
+            override fun onPasteTextFromClipboard(session: TerminalSession?) {}
             override fun onBell(session: TerminalSession) {}
             override fun onColorsChanged(session: TerminalSession) {}
             override fun onTerminalCursorStateChange(state: Boolean) {}
-            override fun getTerminalCursorStyle(): Int = 0
+            override fun setTerminalShellPid(session: TerminalSession, pid: Int) {}
+            override fun getTerminalCursorStyle(): Int? = null
             override fun logError(tag: String?, message: String?) {
                 Log.e(tag ?: "Termux", message ?: "")
             }
@@ -87,22 +79,25 @@ class MainActivity : AppCompatActivity() {
             override fun logVerbose(tag: String?, message: String?) {
                 Log.v(tag ?: "Termux", message ?: "")
             }
-            override fun logStackTraceWithMessage(tag: String?, message: String?, e: Throwable?) {
+            override fun logStackTraceWithMessage(tag: String?, message: String?, e: Exception?) {
                 Log.e(tag ?: "Termux", message ?: "", e)
+            }
+            override fun logStackTrace(tag: String?, e: Exception?) {
+                Log.e(tag ?: "Termux", "stack trace", e)
             }
         }
 
         try {
             session = TerminalSession(
                 binary,
-                arrayOf<String>(),
                 filesDir.absolutePath,
+                arrayOf(),
                 env,
-                80,
-                24,
+                null,
                 client
             )
             terminalView.attachSession(session)
+            session?.updateSize(80, 24, 0, 0)
             Log.i(tag, "terminal session started")
         } catch (t: Throwable) {
             Log.e(tag, "failed to start terminal session", t)
