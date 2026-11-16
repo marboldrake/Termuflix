@@ -91,7 +91,7 @@ class MainActivity : AppCompatActivity() {
             session = TerminalSession(
                 binary,
                 filesDir.absolutePath,
-                arrayOf(),
+                arrayOf<String>(),
                 env,
                 null,
                 client
