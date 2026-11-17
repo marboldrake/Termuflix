@@ -24,6 +24,14 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      window.addEventListener("error", function (e) {
+        console.error("Global error:", e.message, e.filename, e.lineno);
+      });
+      window.addEventListener("unhandledrejection", function (e) {
+        console.error("Unhandled rejection:", e.reason);
+      });
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

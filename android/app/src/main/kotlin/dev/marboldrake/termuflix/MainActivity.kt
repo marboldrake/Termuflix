@@ -60,9 +60,13 @@ class MainActivity : AppCompatActivity() {
         )
 
         lifecycleScope.launch {
-            waitForEngine()
-            Log.i(tag, "Loading web bundle")
-            webView.loadUrl("file:///android_asset/web/index.html")
+            try {
+                waitForEngine()
+                Log.i(tag, "Loading web bundle")
+                webView.loadUrl("file:///android_asset/web/index.html")
+            } catch (e: Throwable) {
+                Log.e(tag, "Failed to load web bundle", e)
+            }
         }
     }
 

@@ -186,6 +186,9 @@ export default function App() {
     try {
       const items = await api.getHomeCatalog(provider);
       setCatalog(items);
+    } catch (e) {
+      console.error("Failed to load catalog:", e);
+      pushToast("ERROR", "Could not reach the local engine");
     } finally {
       setCatalogLoading(false);
     }
