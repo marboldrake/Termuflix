@@ -1,82 +1,100 @@
 package dev.marboldrake.termuflix
 
+import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
 import android.view.ViewGroup
-import android.widget.FrameLayout
+import android.webkit.WebResourceError
+import android.webkit.WebResourceRequest
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.appcompat.app.AppCompatActivity
-import com.termux.shared.termux.terminal.TermuxTerminalSessionClientBase
-import com.termux.terminal.TerminalSession
-import com.termux.view.TerminalView
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.net.HttpURLConnection
+import java.net.URL
 
 class MainActivity : AppCompatActivity() {
-    private val tag = "TermuflixTerm"
-    private lateinit var terminalView: TerminalView
-    private var session: TerminalSession? = null
+    private lateinit var webView: WebView
+    private val tag = "TermuflixUI"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.i(tag, "onCreate")
+        window.decorView.setBackgroundColor(Color.parseColor("#07080a"))
+        Log.i(tag, "onCreate: starting engine")
+        EngineService.start(this)
 
-        val container = FrameLayout(this).apply {
+        webView = WebView(this).apply {
             layoutParams = ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
+            setBackgroundColor(Color.parseColor("#07080a"))
+        }
+        setContentView(webView)
+
+        webView.settings.javaScriptEnabled = true
+        webView.settings.domStorageEnabled = true
+        webView.settings.allowFileAccess = true
+        webView.settings.allowContentAccess = true
+        webView.settings.mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+
+        webView.webViewClient = object : WebViewClient() {
+            override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
+                Log.e(tag, "WebView error: ${error?.description} for ${request?.url}")
+            }
+            override fun onPageFinished(view: WebView?, url: String?) {
+                Log.i(tag, "Page finished: $url")
+            }
         }
 
-        terminalView = TerminalView(this, null).apply {
-            layoutParams = FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.MATCH_PARENT
-            )
-        }
-        container.addView(terminalView)
-        setContentView(container)
-
-        startTerminal()
-    }
-
-    private fun startTerminal() {
-        val libDir = applicationInfo.nativeLibraryDir
-        val binary = "$libDir/libtermuflix_engine.so"
-        Log.i(tag, "binary: $binary")
-
-        val env = arrayOf(
-            "TERM=xterm-256color",
-            "HOME=${filesDir.absolutePath}",
-            "PATH=$libDir:/system/bin:/system/xbin",
-            "LANG=en_US.UTF-8",
+        webView.loadDataWithBaseURL(
+            "file:///android_asset/web/",
+            "<html><body style='background:#07080a;color:#f4f5f7;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0'><div style='text-align:center'><h1 style='letter-spacing:.18em;font-size:14px'>TERMUFLIX</h1><p style='color:#6e7683;font-size:12px'>Starting engine…</p></div></body></html>",
+            "text/html",
+            "UTF-8",
+            null
         )
 
-        val client = object : TermuxTerminalSessionClientBase() {
-            override fun onTextChanged(changedSession: TerminalSession) {
-                terminalView.onScreenUpdated()
-            }
-            override fun onSessionFinished(finishedSession: TerminalSession) {
-                Log.i(tag, "session finished")
-            }
+        lifecycleScope.launch {
+            waitForEngine()
+            Log.i(tag, "Loading web bundle")
+            webView.loadUrl("file:///android_asset/web/index.html")
         }
+    }
 
-        try {
-            session = TerminalSession(
-                binary,
-                filesDir.absolutePath,
-                arrayOf<String>(),
-                env,
-                null,
-                client
-            )
-            terminalView.attachSession(session)
-            session?.updateSize(80, 24, 0, 0)
-            Log.i(tag, "terminal session started")
-        } catch (t: Throwable) {
-            Log.e(tag, "failed to start terminal session", t)
+    private suspend fun waitForEngine() {
+        withContext(Dispatchers.IO) {
+            var attempts = 0
+            while (attempts < 50 && !EngineService.isRunning()) {
+                delay(100)
+                attempts++
+            }
+            attempts = 0
+            while (attempts < 50) {
+                try {
+                    val conn = URL("http://127.0.0.1:${EngineService.PORT}/health").openConnection() as HttpURLConnection
+                    conn.connectTimeout = 500
+                    conn.readTimeout = 500
+                    if (conn.responseCode == 200) {
+                        Log.i(tag, "Engine online")
+                        return@withContext
+                    }
+                } catch (e: Throwable) {
+                    Log.d(tag, "Engine not ready: ${e.message}")
+                }
+                delay(100)
+                attempts++
+            }
+            Log.w(tag, "Engine not reachable after wait; loading UI anyway")
         }
     }
 
     override fun onDestroy() {
-        session?.finishIfRunning()
+        EngineService.stop()
         super.onDestroy()
     }
 }
